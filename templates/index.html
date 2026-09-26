@@ -217,15 +217,41 @@ td{padding:9px 12px;border-bottom:1px solid #f0ede6;white-space:nowrap;max-width
           <button data-cmd="bold" title="Bold"><b>B</b></button>
           <button data-cmd="italic" title="Italic"><i>I</i></button>
           <button data-cmd="underline" title="Underline"><u>U</u></button>
+          <button data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+          <span class="sep"></span>
+          <select id="fontFamily" title="Font style">
+            <option value="">Font</option>
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Noto Sans Devanagari">Hindi / Devanagari</option>
+            <option value="Kalinga">Odia</option>
+          </select>
+          <button id="fontDown" title="Decrease font size">A−</button>
+          <button id="fontUp" title="Increase font size">A+</button>
+          <select id="fontSize">
+            <option value="">Size</option><option value="1">8</option><option value="2">10</option>
+            <option value="3">12</option><option value="4">14</option><option value="5">18</option>
+            <option value="6">24</option><option value="7">36</option>
+          </select>
+          <span class="sep"></span>
+          <input type="color" id="textColor" value="#1a1a2e" title="Font colour">
+          <input type="color" id="bgColor" value="#fff3a6" title="Background / highlight colour">
+          <button data-cmd="removeFormat" title="Clear formatting">⌫fmt</button>
+          <span class="sep"></span>
+          <button data-cmd="justifyLeft" title="Align left">⬅</button>
+          <button data-cmd="justifyCenter" title="Centre">↔</button>
+          <button data-cmd="justifyRight" title="Align right">➡</button>
+          <select id="lineSpacing" title="Line spacing">
+            <option value="">Spacing</option><option value="1">1.0</option><option value="1.15">1.15</option>
+            <option value="1.5">1.5</option><option value="2">2.0</option>
+          </select>
           <span class="sep"></span>
           <button data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
           <button data-cmd="insertOrderedList" title="Numbered list">1≡</button>
-          <span class="sep"></span>
-          <select id="fontSize">
-            <option value="">Size</option><option value="2">Small</option>
-            <option value="3">Normal</option><option value="5">Large</option><option value="6">Huge</option>
-          </select>
-          <input type="color" id="textColor" value="#1a1a2e" title="Text colour">
           <span class="sep"></span>
           <button id="addLink" title="Insert link">🔗</button>
           <button id="addImage" title="Insert image URL">🖼️</button>
@@ -563,7 +589,32 @@ $("#delTemplate").onclick = async () => {
 /* ---------- compose ---------- */
 $$("#toolbar [data-cmd]").forEach((b) => b.onmousedown = (e) => { e.preventDefault(); document.execCommand(b.dataset.cmd); });
 $("#fontSize").onchange = () => { document.execCommand("fontSize", false, $("#fontSize").value); $("#fontSize").value = ""; };
+$("#fontFamily").onchange = () => { document.execCommand("fontName", false, $("#fontFamily").value); $("#fontFamily").value = ""; };
 $("#textColor").oninput = () => document.execCommand("foreColor", false, $("#textColor").value);
+$("#bgColor").oninput = () => document.execCommand("hiliteColor", false, $("#bgColor").value);
+$("#lineSpacing").onchange = () => {
+  document.execCommand("styleWithCSS", true, null);
+  document.execCommand("lineHeight", false, $("#lineSpacing").value);
+  $("#lineSpacing").value = "";
+};
+const stepSize = (dir) => {
+  // Bump every font size marker inside the selection one step (1-7 scale)
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const order = ["1", "2", "3", "4", "5", "6", "7"];
+  const cur = (() => {
+    let node = sel.anchorNode;
+    while (node) {
+      if (node.nodeType === 1 && node.tagName === "FONT" && node.size) return +node.size;
+      node = node.parentNode;
+    }
+    return 3;
+  })();
+  const next = Math.max(1, Math.min(7, cur + dir));
+  document.execCommand("fontSize", false, String(next));
+};
+$("#fontUp").onmousedown = (e) => { e.preventDefault(); stepSize(1); };
+$("#fontDown").onmousedown = (e) => { e.preventDefault(); stepSize(-1); };
 $("#addLink").onclick = () => { const u = prompt("Link URL:", "https://"); if (u) document.execCommand("createLink", false, u); };
 $("#addImage").onclick = () => { const u = prompt("Image URL:", "https://"); if (u) document.execCommand("insertImage", false, u); };
 $("#addSignature").onclick = () => {
