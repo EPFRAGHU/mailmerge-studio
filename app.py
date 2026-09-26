@@ -578,6 +578,34 @@ def api_save_password():
     return jsonify(ok=True)
 
 
+@app.route("/api/test-connection", methods=["POST"])
+def api_test_connection():
+    """Verify SMTP login only — sends nothing."""
+    cfg = STATE["config"].get("smtp", {})
+    host = cfg.get("host", "")
+    port = int(cfg.get("port", 587))
+    user = cfg.get("user", "")
+    pwd = cfg.get("password", "")
+    sec = cfg.get("security", "starttls")
+    if not host or not user or not pwd:
+        return jsonify(ok=False, error="Save your connection (host, email and password) first")
+    try:
+        if sec == "ssl":
+            with smtplib.SMTP_SSL(host, port, timeout=15, context=ssl.create_default_context()) as s:
+                s.login(user, pwd)
+        else:
+            with smtplib.SMTP(host, port, timeout=15) as s:
+                s.ehlo()
+                if sec == "starttls":
+                    s.starttls(context=ssl.create_default_context())
+                s.login(user, pwd)
+        return jsonify(ok=True)
+    except smtplib.SMTPAuthenticationError:
+        return jsonify(ok=False, error="Authentication rejected — check the app password (535 error)")
+    except Exception as e:
+        return jsonify(ok=False, error=f"Could not reach server: {e}")
+
+
 PRESETS = {
     "gmail": {"host": "smtp.gmail.com", "port": 587, "security": "starttls"},
     "outlook": {"host": "smtp.office365.com", "port": 587, "security": "starttls"},

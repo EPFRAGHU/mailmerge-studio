@@ -118,6 +118,12 @@ td{padding:9px 12px;border-bottom:1px solid #f0ede6;white-space:nowrap;max-width
 .summary-grid span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b6879;margin-bottom:4px}
 .summary-grid b{font-size:14.5px}
 @media(max-width:900px){.summary-grid{grid-template-columns:1fr}}
+.conn-status{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600}
+.conn-status .dot{width:12px;height:12px;border-radius:99px;display:inline-block}
+.conn-status.ok .dot{background:#1f9d6b;box-shadow:0 0 8px rgba(31,157,107,.7)}
+.conn-status.bad .dot{background:#d6455b;box-shadow:0 0 8px rgba(214,69,91,.7)}
+.conn-status.ok{color:#1f9d6b}
+.conn-status.bad{color:#d6455b}
 .foot{display:flex;justify-content:space-between;margin-top:8px}
 .toast{position:fixed;bottom:26px;right:26px;background:var(--ink);color:#fff;padding:13px 20px;
   border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow);z-index:50}
@@ -168,7 +174,9 @@ td{padding:9px 12px;border-bottom:1px solid #f0ede6;white-space:nowrap;max-width
         <div class="hint" id="providerHint"></div>
         <div class="row gap">
           <button class="btn primary" id="saveSmtp">Save connection</button>
+          <button class="btn ghost" id="checkConn">Test connection</button>
           <button class="btn ghost" id="sendTest">Send myself a test email</button>
+          <span id="connStatus" class="conn-status" style="display:none"></span>
         </div>
       </div>
     </section>
@@ -662,6 +670,22 @@ async function updateProgress() {
   }
 }
 $("#exportLog").onclick = () => (location.href = "/api/log/export");
+
+/* ---------- connection test with status dot ---------- */
+$("#checkConn").onclick = async () => {
+  const el = $("#connStatus");
+  el.style.display = "";
+  el.className = "conn-status";
+  el.innerHTML = `<span class="dot" style="background:#d69a2e;box-shadow:0 0 8px rgba(214,154,46,.7)"></span> Checking…`;
+  const r = await (await fetch("/api/test-connection", { method: "POST" })).json();
+  if (r.ok) {
+    el.className = "conn-status ok";
+    el.innerHTML = `<span class="dot"></span> Connected — SMTP login successful`;
+  } else {
+    el.className = "conn-status bad";
+    el.innerHTML = `<span class="dot"></span> ${esc(r.error)}`;
+  }
+};
 
 /* ---------- campaign summary on Send & Track ---------- */
 async function updateSummary() {
