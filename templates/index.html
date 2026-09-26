@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MailMerge Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+:root{color-scheme:light;
+  --bg:#f4f2ee; --panel:#ffffff; --ink:#1d1d2b; --muted:#7a7889;
+  --accent:#5b4bd6; --accent2:#8a7cff; --good:#1f9d6b; --bad:#d6455b;
+  --line:#e8e4dc; --radius:16px; --shadow:0 10px 30px rgba(40,35,80,.08);}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:
+  radial-gradient(1200px 600px at 90% -10%, #e8e3ff 0%, transparent 60%),
+  radial-gradient(900px 500px at -10% 110%, #ffe9d9 0%, transparent 55%),
+  var(--bg);color:var(--ink)}
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;padding:26px 18px;display:flex;flex-direction:column;gap:22px;
+  border-right:1px solid var(--line);background:rgba(255,255,255,.6);backdrop-filter:blur(8px)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{font-size:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:14px;width:52px;height:52px;display:grid;place-items:center;box-shadow:var(--shadow)}
+.brand h1{font-family:'Fraunces',serif;font-size:19px;margin:0;line-height:1.1}
+.brand h1 span{color:var(--accent)}
+.brand p{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
+nav{display:flex;flex-direction:column;gap:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:none;background:none;
+  border-radius:12px;font:inherit;font-weight:500;cursor:pointer;color:var(--muted);text-align:left;transition:.18s}
+.nav-item:hover{background:#efeaff;color:var(--ink)}
+.nav-item.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:var(--shadow)}
+.sidebar-foot{margin-top:auto}
+.pill{font-size:12px;background:#eef2ff;color:#4753d6;padding:6px 12px;border-radius:99px;font-weight:600}
+.pill.live{background:#ffe4ec;color:#c22b52;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.6}}
+.main{flex:1;padding:34px 44px;max-width:1050px}
+.step{display:none;animation:fade .3s}
+.step.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+header h2{font-family:'Fraunces',serif;font-size:30px;margin:0 0 6px}
+header p{color:var(--muted);margin:0 0 22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 12px;font-size:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin:18px 0}
+.form-grid.three{grid-template-columns:repeat(3,1fr)}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#55536a}
+input,select{padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font:inherit;
+  background:#fbfaf8;transition:.15s}
+input:focus,select:focus{outline:none;border-color:var(--accent2);background:#fff;box-shadow:0 0 0 4px #ece8ff}
+.row{display:flex;align-items:center}
+.gap{gap:12px}.wrap{flex-wrap:wrap}
+.muted{color:var(--muted);font-size:13.5px}
+.hint{font-size:13px;color:var(--muted);background:#f6f4ef;border-radius:10px;padding:10px 14px;margin-top:6px}
+.btn{padding:11px 20px;border-radius:11px;border:1.5px solid transparent;font:inherit;font-weight:600;
+  cursor:pointer;transition:.15s}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 6px 18px rgba(91,75,214,.3)}
+.btn.primary:hover{transform:translateY(-1px)}
+.btn.ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--accent2)}
+.btn.danger{background:#fdecef;color:var(--bad)}
+.btn.big{padding:14px 30px;font-size:16px}
+.btn.small{padding:7px 14px;font-size:13px}
+.btn.accent{background:#efeaff;color:var(--accent);border-color:#d9d2ff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.file-btn{align-self:flex-start}
+.provider-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:8px}
+.provider{padding:14px;border:1.5px solid var(--line);border-radius:12px;text-align:center;cursor:pointer;
+  font-weight:600;font-size:14px;transition:.15s;background:#fbfaf8}
+.provider:hover{border-color:var(--accent2)}
+.provider.active{border-color:var(--accent);background:#f1edff;color:var(--accent)}
+.dropzone{border:2px dashed #cfc8f5;text-align:center;padding:44px;transition:.2s;cursor:pointer}
+.dropzone.over{background:#f3f0ff;border-color:var(--accent)}
+.dz-icon{font-size:42px}
+.table-wrap{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{position:sticky;top:0;background:#f6f4ef;padding:10px 12px;text-align:left;font-size:12px;
+  text-transform:uppercase;letter-spacing:.04em;color:#6b6879;border-bottom:1px solid var(--line)}
+td{padding:9px 12px;border-bottom:1px solid #f0ede6;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.data-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.toolbar{display:flex;align-items:center;gap:4px;padding:9px;border:1.5px solid var(--line);
+  border-radius:12px 12px 0 0;background:#faf9f6;flex-wrap:wrap}
+.toolbar button{border:none;background:none;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:14px}
+.toolbar button:hover{background:#ece8ff}
+.toolbar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.toolbar select{padding:6px 8px;border-radius:8px;width:auto}
+.toolbar input[type=color]{width:36px;height:32px;padding:2px;border-radius:8px}
+#fontSize{width:70px}
+.editor{min-height:280px;padding:18px 20px;border:1.5px solid var(--line);border-top:none;
+  border-radius:0 0 12px 12px;background:#fff;line-height:1.65;font-size:15px;overflow:auto;max-height:420px}
+.editor:focus{outline:none;border-color:var(--accent2)}
+.editor:empty::before{content:"Start typing your email…";color:#b5b2c2}
+.tag-chip{background:#efeaff;color:var(--accent);padding:2px 8px;border-radius:7px;font-weight:600;font-size:13px}
+.merge-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.merge-tags button{border:1.5px solid #d9d2ff;background:#f7f5ff;color:var(--accent);border-radius:99px;
+  padding:6px 13px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.merge-tags button:hover{background:var(--accent);color:#fff}
+#previewFrame{width:100%;height:320px;border:1px solid var(--line);border-radius:12px;margin-top:10px}
+.attach-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.attach-item{display:flex;align-items:center;gap:8px;background:#f6f4ef;border:1px solid var(--line);
+  border-radius:99px;padding:7px 14px;font-size:13px;font-weight:500}
+.attach-item button{border:none;background:none;cursor:pointer;color:var(--bad);font-weight:700}
+.radio{flex-direction:row;align-items:center;gap:8px;font-weight:500}
+.checkbox{flex-direction:row;align-items:center;gap:9px;font-weight:500;margin-top:12px}
+.progress-row{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+.progress{flex:1;height:12px;background:#eceae4;border-radius:99px;overflow:hidden}
+#progressBar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;border-radius:99px}
+.stats{display:flex;gap:10px}
+.stat{font-size:13px;font-weight:700;padding:5px 12px;border-radius:99px;background:#f0eee8}
+.stat.ok{color:var(--good);background:#e5f6ef}
+.stat.bad{color:var(--bad);background:#fdecef}
+.table-wrap.log{max-height:300px}
+.mini-progress{height:8px;background:#eceae4;border-radius:99px;overflow:hidden;width:120px}
+.mini-progress div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.summary-grid span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b6879;margin-bottom:4px}
+.summary-grid b{font-size:14.5px}
+@media(max-width:900px){.summary-grid{grid-template-columns:1fr}}
+.foot{display:flex;justify-content:space-between;margin-top:8px}
+.toast{position:fixed;bottom:26px;right:26px;background:var(--ink);color:#fff;padding:13px 20px;
+  border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow);z-index:50}
+.toast.show{opacity:1}
+@media(max-width:900px){.form-grid,.form-grid.three{grid-template-columns:1fr}.main{padding:24px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">✉️</div>
+      <div><h1>MailMerge <span>Studio</span></h1><p>Send from your own email</p></div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-step="connect">🔌 <span>Connect Email</span></button>
+      <button class="nav-item" data-step="contacts">📇 <span>Contacts</span></button>
+      <button class="nav-item" data-step="compose">✍️ <span>Compose</span></button>
+      <button class="nav-item" data-step="attachments">📎 <span>Attachments</span></button>
+      <button class="nav-item" data-step="send">🚀 <span>Send &amp; Track</span></button>
+    </nav>
+    <div class="sidebar-foot">
+      <span id="statusPill" class="pill">Idle</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- STEP: CONNECT -->
+    <section id="step-connect" class="step active">
+      <header><h2>Connect your email</h2><p>MailMerge Studio sends from <em>your own</em> mailbox — no third-party service sees your contacts.</p></header>
+      <div class="card">
+        <div class="provider-grid" id="providerGrid"></div>
+        <div class="form-grid">
+          <label>SMTP server <input id="smtpHost" placeholder="smtp.gmail.com"></label>
+          <label>Port <input id="smtpPort" type="number" value="587"></label>
+          <label>Security
+            <select id="smtpSecurity">
+              <option value="starttls">STARTTLS (recommended)</option>
+              <option value="ssl">SSL/TLS</option>
+              <option value="none">None</option>
+            </select>
+          </label>
+          <label>Your email <input id="smtpUser" placeholder="you@gmail.com" autocomplete="off"></label>
+          <label>App password / password <input id="smtpPass" type="password" placeholder="16-character app password" autocomplete="off"></label>
+          <label>Reply-to (optional) <input id="smtpReplyTo" placeholder="replies@yourdomain.com"></label>
+          <label>From name <input id="smtpFromName" placeholder="Your Name"></label>
+        </div>
+        <div class="hint" id="providerHint"></div>
+        <div class="row gap">
+          <button class="btn primary" id="saveSmtp">Save connection</button>
+          <button class="btn ghost" id="sendTest">Send myself a test email</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP: CONTACTS -->
+    <section id="step-contacts" class="step">
+      <header><h2>Your contacts</h2><p>Import an Excel or CSV file. The first row should be column headers.</p></header>
+      <div class="card dropzone" id="dropzone">
+        <div class="dz-icon">📋</div>
+        <h3>Drop your .xlsx / .csv here</h3>
+        <p>or</p>
+        <label class="btn primary file-btn">Browse files<input type="file" id="fileInput" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden></label>
+        <p class="hint" id="importInfo"></p>
+      </div>
+      <div class="card" id="dataCard" style="display:none">
+        <div class="data-toolbar">
+          <span id="dataSummary" class="muted"></span>
+          <button class="btn ghost small" id="clearData">Clear list</button>
+        </div>
+        <div class="table-wrap"><table id="dataTable"></table></div>
+        <div class="row gap" style="margin-top:14px">
+          <input id="listName" placeholder="Save this list as… e.g. 14B Cases September" style="flex:1">
+          <button class="btn primary" id="saveList">Save list</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🗂️ Saved mailing lists</h3>
+        <div class="table-wrap"><table id="listsTable"></table></div>
+      </div>
+    </section>
+
+    <!-- STEP: COMPOSE -->
+    <section id="step-compose" class="step">
+      <header><h2>Compose your email</h2><p>Write like Word. Use <span class="tag-chip">{{ColumnName}}</span> merge tags to personalise.</p></header>
+      <div class="card">
+        <label>Subject line <input id="subject" placeholder="Hi {{Name}}, here's your update ✨"></label>
+        <div class="toolbar" id="toolbar">
+          <button data-cmd="bold" title="Bold"><b>B</b></button>
+          <button data-cmd="italic" title="Italic"><i>I</i></button>
+          <button data-cmd="underline" title="Underline"><u>U</u></button>
+          <span class="sep"></span>
+          <button data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+          <button data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+          <span class="sep"></span>
+          <select id="fontSize">
+            <option value="">Size</option><option value="2">Small</option>
+            <option value="3">Normal</option><option value="5">Large</option><option value="6">Huge</option>
+          </select>
+          <input type="color" id="textColor" value="#1a1a2e" title="Text colour">
+          <span class="sep"></span>
+          <button id="addLink" title="Insert link">🔗</button>
+          <button id="addImage" title="Insert image URL">🖼️</button>
+          <button id="addSignature" title="Insert signature block">✍️</button>
+          <span class="sep"></span>
+          <button id="btnPreview" class="accent">Preview with real data</button>
+        </div>
+        <div class="editor" id="editor" contenteditable="true" spellcheck="true">
+          <p>Hi {{Name}},</p>
+          <p>Write your message here…</p>
+          <p>Warm regards,<br>Your Name</p>
+        </div>
+        <div class="merge-tags" id="mergeTags"></div>
+        <div class="row gap" style="margin-top:12px">
+          <input id="tplName" placeholder="Template name… e.g. 14B Notice" style="flex:1">
+          <button class="btn primary" id="saveTemplate">Save template</button>
+          <button class="btn primary" id="saveDraft">Save draft</button>
+          <span class="muted" id="draftInfo"></span>
+        </div>
+        <div class="row gap" style="margin-top:10px">
+          <select id="tplSelect" style="flex:1"><option value="">Load a saved template…</option></select>
+          <button class="btn ghost" id="loadTemplate">Load</button>
+          <button class="btn danger small" id="delTemplate">Delete</button>
+        </div>
+      </div>
+      <div class="card" id="previewCard" style="display:none">
+        <h3>Preview — recipient 1</h3>
+        <p class="muted" id="previewSubject"></p>
+        <iframe id="previewFrame" sandbox=""></iframe>
+      </div>
+    </section>
+
+    <!-- STEP: ATTACHMENTS -->
+    <section id="step-attachments" class="step">
+      <header><h2>Attachments</h2><p>Attach files to every email, or attach a different file per recipient using a spreadsheet column.</p></header>
+      <div class="card">
+        <h3>📎 Common attachments (everyone gets these)</h3>
+        <label class="btn ghost file-btn">Add files<input type="file" id="attachInput" multiple hidden></label>
+        <div id="attachList" class="attach-list"></div>
+      </div>
+      <div class="card">
+        <h3>🧬 Personalised attachments (per recipient)</h3>
+        <p class="muted">Pick a column from your sheet that contains file name(s) separated by <code>;</code>. Place those files under <code>data/attachments/</code> or upload them above.</p>
+        <label>Column with file names
+          <select id="attachColumn"><option value="">— none —</option></select>
+        </label>
+      </div>
+    </section>
+
+    <!-- STEP: SEND -->
+    <section id="step-send" class="step">
+      <header><h2>Send &amp; track</h2><p>Choose recipients, set a comfortable sending pace, then watch it go.</p></header>
+      <div class="card" id="campaignCard">
+        <h3>📨 Campaign summary</h3>
+        <div class="summary-grid">
+          <div><span class="muted">Mailing list</span><b id="sumList">—</b></div>
+          <div><span class="muted">Recipients</span><b id="sumCount">—</b></div>
+          <div><span class="muted">Attachments</span><b id="sumAttach">—</b></div>
+        </div>
+        <div style="margin-top:10px"><span class="muted">Subject</span><b id="sumSubject" style="display:block;margin-top:4px">—</b></div>
+        <div style="margin-top:10px"><span class="muted">Body preview</span>
+          <iframe id="sumPreview" style="width:100%;height:180px;border:1px solid var(--line);border-radius:12px;margin-top:8px;background:#fff"></iframe>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Recipients</h3>
+        <div class="row gap wrap">
+          <label class="radio"><input type="radio" name="mode" value="all" checked> All rows</label>
+          <label class="radio"><input type="radio" name="mode" value="selected"> Only checked rows</label>
+          <label class="radio"><input type="radio" name="mode" value="test"> Test send (one email to me)</label>
+        </div>
+        <label style="margin-top:10px">Test recipient <input id="testRecipient" placeholder="you@gmail.com"></label>
+      </div>
+      <div class="card">
+        <h3>Pacing &amp; safety</h3>
+        <div class="form-grid three">
+          <label>Delay between emails (s) <input id="delaySeconds" type="number" value="3" min="0.5"></label>
+          <label>Batch size (pause after) <input id="batchSize" type="number" value="40"></label>
+          <label>Batch pause (s) <input id="batchPauseSeconds" type="number" value="120"></label>
+        </div>
+        <label class="checkbox"><input type="checkbox" id="testMode"> Dry run — don't actually send (verify merge &amp; attachments)</label>
+      </div>
+      <div class="row gap">
+        <button class="btn primary big" id="btnLaunch">🚀 Start sending</button>
+        <button class="btn danger" id="btnStop" disabled>■ Stop</button>
+      </div>
+      <div class="card">
+        <div class="progress-row">
+          <div class="progress"><div id="progressBar"></div></div>
+          <div class="stats">
+            <span class="stat ok" id="statSent">0 sent</span>
+            <span class="stat bad" id="statFailed">0 failed</span>
+            <span class="stat" id="statTotal">0 total</span>
+          </div>
+        </div>
+        <div class="table-wrap log"><table id="logTable"></table></div>
+        <div class="row gap" style="margin-top:10px">
+          <button class="btn ghost small" id="exportLog">Export report</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📊 Daily quota — Gmail allows ~500 emails per day</h3>
+        <div class="progress-row">
+          <div class="progress"><div id="quotaBar"></div></div>
+          <div class="stats"><span class="stat" id="quotaText">0 / 500 today</span></div>
+        </div>
+        <div class="table-wrap"><table id="dailyTable"></table></div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <button class="btn ghost" id="prevStep">← Back</button>
+      <button class="btn primary" id="nextStep">Next →</button>
+    </footer>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* MailMerge Studio — front-end */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+let COLUMNS = [], ROWS = [], checked = new Set(), selectedProvider = null;
+let pollTimer = null;
+
+function toast(msg, bad = false) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.style.background = bad ? "#d6455b" : "#1d1d2b";
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+/* ---------- navigation ---------- */
+const STEPS = ["connect", "contacts", "compose", "attachments", "send"];
+let step = 0;
+function goTo(i) {
+  step = Math.max(0, Math.min(STEPS.length - 1, i));
+  $$(".nav-item").forEach((b, k) => b.classList.toggle("active", k === step));
+  $$(".step").forEach((s) => s.classList.remove("active"));
+  $("#step-" + STEPS[step]).classList.add("active");
+  if (STEPS[step] === "attachments") loadAttachments();
+  if (STEPS[step] === "compose") renderMergeTags();
+  if (STEPS[step] === "send") updateSummary();
+}
+$$(".nav-item").forEach((b) => b.addEventListener("click", () => goTo(STEPS.indexOf(b.dataset.step))));
+$("#prevStep").onclick = () => goTo(step - 1);
+$("#nextStep").onclick = () => goTo(step + 1);
+
+/* ---------- connect ---------- */
+const PRESET_INFO = {
+  gmail: { label: "Gmail", icon: "📧", hint: "Gmail requires a 16-character <b>App Password</b>: Google Account → Security → 2-Step Verification → App passwords. Regular passwords won't work." },
+  outlook: { label: "Outlook / M365", icon: "📨", hint: "Use your Microsoft account. If 2FA is on, create an app password at account.live.com/proofs." },
+  yahoo: { label: "Yahoo", icon: "🟪", hint: "Generate an app password in Yahoo Account Security." },
+  zoho: { label: "Zoho", icon: "🟩", hint: "Use an application-specific password from Zoho Mail settings." },
+  icloud: { label: "iCloud", icon: "🍎", hint: "Create an app-specific password at appleid.apple.com." },
+  custom: { label: "Custom SMTP", icon: "⚙️", hint: "Enter any SMTP server your provider gives you." },
+};
+function renderProviders() {
+  $("#providerGrid").innerHTML = Object.entries(PRESET_INFO)
+    .map(([k, v]) => `<div class="provider" data-p="${k}">${v.icon}<br>${v.label}</div>`).join("");
+  $$(".provider").forEach((el) => el.onclick = () => {
+    $$(".provider").forEach((p) => p.classList.remove("active"));
+    el.classList.add("active");
+    selectedProvider = el.dataset.p;
+    fetch("/api/presets").then(r => r.json()).then(p => {
+      const pre = p[selectedProvider];
+      $("#smtpHost").value = pre.host; $("#smtpPort").value = pre.port; $("#smtpSecurity").value = pre.security;
+      $("#providerHint").innerHTML = PRESET_INFO[selectedProvider].hint;
+    });
+  });
+}
+renderProviders();
+
+$("#saveSmtp").onclick = async () => {
+  const body = {
+    smtp: {
+      host: $("#smtpHost").value, port: +$("#smtpPort").value, security: $("#smtpSecurity").value,
+      user: $("#smtpUser").value, replyTo: $("#smtpReplyTo").value, fromName: $("#smtpFromName").value,
+    },
+  };
+  const pass = $("#smtpPass").value;
+  await fetch("/api/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (pass && pass !== "********") await fetch("/api/config/save-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pass }) });
+  toast("Connection saved ✓");
+};
+
+$("#sendTest").onclick = async () => {
+  if (!$("#smtpHost").value) return toast("Save your connection first", true);
+  const to = prompt("Send a test email to:", $("#smtpUser").value);
+  if (!to) return;
+  await fetch("/api/send", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subject: "Test from MailMerge Studio", html: "<h2>It works! 🎉</h2><p>Your SMTP settings are correct.</p>", testMode: false, testRecipient: to, delaySeconds: 0.5, batchSize: 1, batchPauseSeconds: 30 }),
+  });
+  toast("Test sending — check Send & Track for the result");
+};
+
+async function loadConfig() {
+  const cfg = await (await fetch("/api/config")).json();
+  const s = cfg.smtp || {};
+  $("#smtpHost").value = s.host || ""; $("#smtpPort").value = s.port || 587;
+  $("#smtpSecurity").value = s.security || "starttls"; $("#smtpUser").value = s.user || "";
+  $("#smtpReplyTo").value = s.replyTo || ""; $("#smtpFromName").value = s.fromName || "";
+}
+loadConfig();
+
+/* ---------- auto-restore workspace on open ---------- */
+async function restoreWorkspace() {
+  const s = await (await fetch("/api/state")).json();
+  if (s.total && s.columns && s.columns.length) {
+    COLUMNS = s.columns; ROWS = s.rows_full || s.rows; checked = new Set(ROWS.map((_, i) => i));
+    $("#dataCard").style.display = "";
+    $("#dataSummary").textContent = `${s.source || "restored list"} — ${s.total} contacts, ${s.columns.length} columns`;
+    renderTable(); renderMergeTags(); fillAttachColumn();
+  }
+  loadLists(); refreshTemplates();
+  const d = JSON.parse(localStorage.getItem("mm_draft") || "null");
+  if (d && d.html) { $("#subject").value = d.subject || ""; $("#editor").innerHTML = d.html || ""; }
+}
+restoreWorkspace();
+
+/* ---------- contacts ---------- */
+const dz = $("#dropzone");
+dz.onclick = (e) => { if (e.target.tagName !== "INPUT" && e.target.tagName !== "LABEL") $("#fileInput").click(); };
+["dragover", "dragenter"].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove("over"); }));
+dz.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]); });
+$("#fileInput").onchange = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0]); };
+
+async function uploadFile(f) {
+  const fd = new FormData(); fd.append("file", f);
+  const r = await (await fetch("/api/import", { method: "POST", body: fd })).json();
+  if (r.error) return toast(r.error, true);
+  COLUMNS = r.columns; ROWS = r.rows; checked = new Set();
+  $("#dataCard").style.display = "";
+  $("#dataSummary").textContent = `${r.source} — ${r.total} contacts, ${r.columns.length} columns`;
+  $("#importInfo").textContent = "";
+  renderTable();
+  renderMergeTags();
+  fillAttachColumn();
+  toast(`Loaded ${r.total} contacts ✓`);
+}
+
+function renderTable() {
+  const head = `<tr><th><input type="checkbox" id="checkAll" checked></th>` + COLUMNS.map((c) => `<th>${esc(c)}</th>`).join("") + "</tr>";
+  const body = ROWS.map((r, i) => `<tr><td><input type="checkbox" class="rowChk" data-i="${i}" checked></td>` +
+    COLUMNS.map((c) => `<td>${esc(String(r[c] ?? ""))}</td>`).join("") + "</tr>").join("");
+  $("#dataTable").innerHTML = head + body;
+  $("#checkAll").onchange = (e) => { $$(".rowChk").forEach((c) => (c.checked = e.target.checked)); syncChecked(); };
+  $$(".rowChk").forEach((c) => (c.onchange = syncChecked));
+}
+function syncChecked() {
+  checked = new Set([...$$(".rowChk")].filter((c) => c.checked).map((c) => +c.dataset.i));
+}
+$("#clearData").onclick = () => { $("#dataCard").style.display = "none"; ROWS = []; };
+
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+/* ---------- saved lists ---------- */
+async function loadLists() {
+  const r = await (await fetch("/api/lists")).json();
+  $("#listsTable").innerHTML =
+    `<tr><th>List name</th><th>Created</th><th>Contacts</th><th>Columns</th><th></th></tr>` +
+    (r.lists.map((l) =>
+      `<tr><td style="font-weight:700">${esc(l.name)}</td><td class="muted">${esc(l.created)}</td><td>${l.count}</td><td>${l.columns}</td>` +
+      `<td class="row gap" style="justify-content:flex-end"><button class="btn primary small" data-load="${esc(l.name)}">Load</button>` +
+      `<button class="btn danger small" data-dellist="${esc(l.name)}">Delete</button></td></tr>`).join("") ||
+      `<tr><td colspan="5" class="muted">No saved lists yet. Import a file above and click "Save list".</td></tr>`);
+  $$("#listsTable [data-load]").forEach((b) => b.onclick = () => loadList(b.dataset.load));
+  $$("#listsTable [data-dellist]").forEach((b) => b.onclick = async () => {
+    if (!confirm(`Delete list "${b.dataset.dellist}"?`)) return;
+    await fetch("/api/lists/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: b.dataset.dellist }) });
+    loadLists();
+  });
+}
+
+async function loadList(name) {
+  const r = await (await fetch("/api/lists/load", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) })).json();
+  if (r.error) return toast(r.error, true);
+  COLUMNS = r.columns; ROWS = r.rows; checked = new Set(ROWS.map((_, i) => i));
+  $("#dataCard").style.display = "";
+  $("#dataSummary").textContent = `${r.source} — ${r.total} contacts, ${r.columns.length} columns`;
+  renderTable(); renderMergeTags(); fillAttachColumn(); loadLists();
+  toast(`Loaded "${name}" ✓`);
+}
+
+$("#saveList").onclick = async () => {
+  const name = $("#listName").value.trim();
+  if (!name) return toast("Give the list a name first", true);
+  await fetch("/api/lists/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+  $("#listName").value = "";
+  toast(`List "${name}" saved ✓`);
+  loadLists();
+};
+
+/* ---------- saved templates ---------- */
+async function refreshTemplates(select) {
+  const r = await (await fetch("/api/templates")).json();
+  $("#tplSelect").innerHTML = `<option value="">Load a saved template…</option>` +
+    r.templates.map((t) => `<option value="${esc(t.name)}">${esc(t.name)}${t.list ? " — " + esc(t.list) : ""}</option>`).join("");
+  if (select) $("#tplSelect").value = select;
+}
+
+$("#saveTemplate").onclick = async () => {
+  const name = $("#tplName").value.trim();
+  if (!name) return toast("Give the template a name first", true);
+  const listName = $("#dataSummary").textContent.split(" — ")[0] || "";
+  await fetch("/api/templates/save", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, subject: $("#subject").value, html: editorHTML(), list: listName }) });
+  $("#tplName").value = "";
+  toast(`Template "${name}" saved ✓`);
+  refreshTemplates(name);
+};
+
+$("#loadTemplate").onclick = async () => {
+  const name = $("#tplSelect").value;
+  if (!name) return toast("Pick a template to load", true);
+  const t = await (await fetch("/api/templates/load", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) })).json();
+  if (t.error) return toast(t.error, true);
+  $("#subject").value = t.subject; $("#editor").innerHTML = t.html;
+  $("#draftInfo").textContent = `Template "${name}" loaded`;
+  toast(`Template "${name}" loaded ✓`);
+};
+
+$("#delTemplate").onclick = async () => {
+  const name = $("#tplSelect").value;
+  if (!name) return toast("Pick a template to delete", true);
+  if (!confirm(`Delete template "${name}"?`)) return;
+  await fetch("/api/templates/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+  refreshTemplates();
+  toast("Template deleted");
+};
+
+/* ---------- compose ---------- */
+$$("#toolbar [data-cmd]").forEach((b) => b.onmousedown = (e) => { e.preventDefault(); document.execCommand(b.dataset.cmd); });
+$("#fontSize").onchange = () => { document.execCommand("fontSize", false, $("#fontSize").value); $("#fontSize").value = ""; };
+$("#textColor").oninput = () => document.execCommand("foreColor", false, $("#textColor").value);
+$("#addLink").onclick = () => { const u = prompt("Link URL:", "https://"); if (u) document.execCommand("createLink", false, u); };
+$("#addImage").onclick = () => { const u = prompt("Image URL:", "https://"); if (u) document.execCommand("insertImage", false, u); };
+$("#addSignature").onclick = () => {
+  document.execCommand("insertHTML", false, `<br><p style="color:#555">— <b>Your Name</b><br>Your Title · Company<br>📞 +91 00000 00000</p>`);
+};
+
+function renderMergeTags() {
+  $("#mergeTags").innerHTML = COLUMNS.map((c) => `<button data-t="${esc(c)}">{{${esc(c)}}}</button>`).join("");
+  $$("#mergeTags button").forEach((b) => b.onclick = () => document.execCommand("insertText", false, `{{${b.dataset.t}}}`));
+}
+
+$("#btnPreview").onclick = () => {
+  if (!ROWS.length) return toast("Import contacts first", true);
+  const row = ROWS[0];
+  $("#previewSubject").innerHTML = "<b>Subject:</b> " + esc(merge($("#subject").value, row));
+  $("#previewFrame").srcdoc = mergeHTML(editorHTML(), row);
+  $("#previewCard").style.display = "";
+};
+
+function editorHTML() { return $("#editor").innerHTML; }
+function merge(text, row) {
+  return (text || "").replace(/\{\{\s*([^}]+?)\s*\}\}/g, (m, k) => row[k] ?? "");
+}
+function mergeHTML(html, row) { return merge(html, row); }
+
+$("#saveDraft").onclick = () => {
+  localStorage.setItem("mm_draft", JSON.stringify({ subject: $("#subject").value, html: editorHTML() }));
+  $("#draftInfo").textContent = "Draft saved in this browser ✓";
+  toast("Draft saved ✓");
+};
+try {
+  const d = JSON.parse(localStorage.getItem("mm_draft") || "null");
+  if (d) { $("#subject").value = d.subject; $("#editor").innerHTML = d.html; }
+} catch (e) {}
+
+/* ---------- attachments ---------- */
+$("#attachInput").onchange = async (e) => {
+  const fd = new FormData();
+  [...e.target.files].forEach((f) => fd.append("files", f));
+  await fetch("/api/attachments", { method: "POST", body: fd });
+  e.target.value = ""; loadAttachments(); toast("Files uploaded ✓");
+};
+async function loadAttachments() {
+  const r = await (await fetch("/api/attachments")).json();
+  $("#attachList").innerHTML = r.files.map((f) => `<span class="attach-item">📄 ${esc(f)} <button data-f="${esc(f)}">×</button></span>`).join("");
+  $$("#attachList button").forEach((b) => b.onclick = async () => {
+    await fetch("/api/attachments/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: b.dataset.f }) });
+    loadAttachments();
+  });
+}
+function fillAttachColumn() {
+  $("#attachColumn").innerHTML = `<option value="">— none —</option>` + COLUMNS.map((c) => `<option>${esc(c)}</option>`).join("");
+}
+
+/* ---------- send & track ---------- */
+$("#btnLaunch").onclick = async () => {
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const atts = await (await fetch("/api/attachments")).json();
+  const payload = {
+    subject: $("#subject").value,
+    html: editorHTML(),
+    attachments: atts.files,
+    attachmentColumn: $("#attachColumn").value,
+    delaySeconds: +$("#delaySeconds").value,
+    batchSize: +$("#batchSize").value,
+    batchPauseSeconds: +$("#batchPauseSeconds").value,
+    testMode: $("#testMode").checked,
+    testRecipient: $("#testRecipient").value,
+    selectedRows: mode === "selected" ? [...checked] : null,
+  };
+  if (mode === "test" && !payload.testRecipient) return toast("Enter a test recipient", true);
+  if (mode !== "test" && !ROWS.length) return toast("Import contacts first", true);
+  const r = await (await fetch("/api/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })).json();
+  if (r.error) return toast(r.error, true);
+  $("#btnStop").disabled = false;
+  toast(mode === "test" ? "Test send started" : "Campaign started 🚀");
+  startPolling();
+};
+
+$("#btnStop").onclick = async () => { await fetch("/api/stop", { method: "POST" }); toast("Stopping…"); };
+
+function startPolling() {
+  clearInterval(pollTimer);
+  pollTimer = setInterval(updateProgress, 1200);
+  updateProgress();
+}
+async function updateProgress() {
+  const p = await (await fetch("/api/progress")).json();
+  $("#statSent").textContent = `${p.sent} sent`;
+  $("#statFailed").textContent = `${p.failed} failed`;
+  $("#statTotal").textContent = `${p.total} total`;
+  const pct = p.total ? Math.round(((p.sent + p.failed) / p.total) * 100) : 0;
+  $("#progressBar").style.width = pct + "%";
+  const pill = $("#statusPill");
+  pill.textContent = p.status === "running" ? "Sending…" : p.status === "stopped" ? "Stopped" : p.status === "done" ? "Finished" : "Idle";
+  pill.classList.toggle("live", p.status === "running");
+  $("#logTable").innerHTML =
+    `<tr><th>Email</th><th>Status</th><th>Detail</th></tr>` +
+    [...(p.log || [])].reverse().slice(0, 100).map((e) =>
+      `<tr><td>${esc(e.to || "")}</td><td style="color:${e.status === "sent" ? "#1f9d6b" : "#d6455b"};font-weight:700">${e.status}</td><td class="muted">${esc(e.error || "")}</td></tr>`).join("");
+  if (p.status !== "running") {
+    $("#btnStop").disabled = true;
+    if (p.status === "done") { clearInterval(pollTimer); toast("Campaign finished ✓"); }
+  }
+}
+$("#exportLog").onclick = () => (location.href = "/api/log/export");
+
+/* ---------- campaign summary on Send & Track ---------- */
+async function updateSummary() {
+  $("#sumList").textContent = $("#dataSummary").textContent.split(" — ")[0] || "No list loaded";
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const n = mode === "selected" ? checked.size : mode === "test" ? 1 : ROWS.length;
+  $("#sumCount").textContent = mode === "test" ? "1 (test send)" : `${n} contact${n === 1 ? "" : "s"}`;
+  $("#sumSubject").textContent = $("#subject").value || "(empty — write a subject in Compose)";
+  const atts = await (await fetch("/api/attachments")).json();
+  $("#sumAttach").textContent = atts.files.length ? atts.files.join(", ") : "none";
+  $("#sumPreview").srcdoc = editorHTML() || "<p style='font-family:sans-serif;color:#999;padding:16px'>Body is empty — write it in Compose.</p>";
+}
+$$('input[name="mode"]').forEach((r) => r.addEventListener("change", updateSummary));
+
+/* ---------- daily quota counter ---------- */
+async function updateDaily() {
+  const d = await (await fetch("/api/daily")).json();
+  const used = d.today.sent;
+  const pct = Math.min(100, Math.round((used / d.limit) * 100));
+  const bar = $("#quotaBar");
+  bar.style.width = pct + "%";
+  bar.style.background = pct > 90 ? "linear-gradient(90deg,#d6455b,#e8806b)" : pct > 70 ? "linear-gradient(90deg,#d69a2e,#e8c06b)" : "linear-gradient(90deg,var(--accent),var(--accent2))";
+  $("#quotaText").textContent = `${used} / ${d.limit} today (${d.today.failed} failed)`;
+  $("#dailyTable").innerHTML =
+    `<tr><th>Date</th><th>Sent</th><th>Failed</th><th>Quota used</th></tr>` +
+    d.days.map(([day, s]) =>
+      `<tr><td>${esc(day)}</td><td style="font-weight:700;color:#1f9d6b">${s.sent}</td><td style="font-weight:700;color:#d6455b">${s.failed}</td><td><div class="mini-progress"><div style="width:${Math.min(100, (s.sent / d.limit) * 100)}%"></div></div></td></tr>`).join("") ||
+    `<tr><td colspan="4" class="muted">No sends recorded yet — counters appear after your first real campaign.</td></tr>`;
+}
+updateDaily();
+setInterval(updateDaily, 15000);
+</script>
+</body>
+</html>
