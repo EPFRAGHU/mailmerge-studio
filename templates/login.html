@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — MailMerge Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:#eef0f6;color:#0f1330;
+  display:grid;place-items:center;min-height:100vh}
+.box{background:#fff;border:1px solid #e4e7f2;border-radius:18px;padding:44px 40px;width:380px;max-width:92vw;
+  box-shadow:0 1px 2px rgba(15,19,48,.05),0 16px 40px rgba(15,19,48,.08)}
+.logo{font-size:28px;background:linear-gradient(135deg,#4f46e5,#8b5cf6);border-radius:16px;
+  width:58px;height:58px;display:grid;place-items:center;margin:0 auto 16px;box-shadow:0 10px 24px rgba(79,70,229,.4)}
+h1{font-size:21px;margin:0 0 4px;font-weight:800;text-align:center;letter-spacing:-.02em}
+.sub{color:#69708f;font-size:13.5px;margin:0 0 24px;text-align:center;line-height:1.5}
+label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#565d80;margin-bottom:14px}
+input{padding:11px 13px;border:1.5px solid #e4e7f2;border-radius:10px;font:inherit;background:#f8f9fd}
+input:focus{outline:none;border-color:#4f46e5;background:#fff;box-shadow:0 0 0 4px rgba(79,70,229,.12)}
+.btn{width:100%;padding:13px;border:none;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#8b5cf6);
+  color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 6px 16px rgba(79,70,229,.35)}
+.btn:hover{transform:translateY(-1px)}
+.err{margin-top:14px;color:#ef4466;font-size:13.5px;font-weight:600;text-align:center;min-height:18px}
+.ok{color:#10b981}
+.alt{margin-top:18px;text-align:center;font-size:13px;color:#69708f}
+.alt a{color:#4f46e5;font-weight:600;text-decoration:none;cursor:pointer}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">✉️</div>
+  <h1>MailMerge Studio</h1>
+  <p class="sub">Sign in to your private workspace — your own mailbox, lists and templates.</p>
+
+  <form id="loginForm">
+    <label>Username <input id="username" autocomplete="username" required></label>
+    <label>Password <input id="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn" type="submit">Sign in</button>
+  </form>
+
+  <form id="regForm" class="hide">
+    <label>Full name <input id="rName" required></label>
+    <label>Username <input id="rUsername" autocomplete="username" required></label>
+    <label>Password (min 6 chars) <input id="rPassword" type="password" autocomplete="new-password" required></label>
+    <button class="btn" type="submit">Create account</button>
+  </form>
+
+  <div class="err" id="msg"></div>
+  <div class="alt" id="alt">
+    First time? <a id="showReg">Create the first account</a>
+  </div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const msg=(t,ok)=>{const e=$("#msg");e.textContent=t;e.className="err"+(ok?" ok":"");};
+$("#showReg").onclick=()=>{$("#loginForm").classList.add("hide");$("#regForm").classList.remove("hide");$("#alt").classList.add("hide");msg("");};
+
+$("#loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const r = await (await fetch("/api/auth/login", {method:"POST",headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({username:$("#username").value,password:$("#password").value})})).json();
+  if (r.ok) location.href="/"; else msg(r.error||"Login failed");
+};
+$("#regForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const r = await (await fetch("/api/auth/register", {method:"POST",headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name:$("#rName").value,username:$("#rUsername").value,password:$("#rPassword").value})})).json();
+  if (r.ok) location.href="/";
+  else { msg(r.error||"Registration failed"); if ((r.error||"").includes("closed")) $("#regForm").classList.add("hide"), $("#loginForm").classList.remove("hide"), $("#alt").classList.add("hide"); }
+};
+fetch("/api/me").then(r=>r.json()).then(m=>{ if(m.loggedIn) location.href="/"; });
+</script>
+</body>
+</html>

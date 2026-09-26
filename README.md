@@ -4,33 +4,34 @@ Also deployable on any server (VPS) via Docker — see **Deploying to a VPS with
 
 ---
 
-## Deploying to a VPS with Coolify (Hostinger)
+## Multi-user: Google Sign-In + Admin panel
 
-1. **Push this folder to GitHub** (from VS Code terminal, inside the MailMergeApp folder):
+Each person signs in with their own Google account and gets a private workspace:
+their own SMTP connection (their Gmail + app password), mailing lists, templates,
+attachments, send log and daily quota counter. Nobody sees anyone else's data.
 
-   ```powershell
-   git init
-   git add .
-   git commit -m "MailMerge Studio"
-   # create an empty repo on github.com first, then:
-   git remote add origin https://github.com/YOUR_USERNAME/mailmerge-studio.git
-   git push -u origin main
-   ```
+**One-time setup — create Google OAuth credentials:**
 
-2. **In Coolify** (on your Hostinger VPS): New Resource → Dockerfile → pick your
-   `mailmerge-studio` repo and main branch.
+1. Go to https://console.cloud.google.com → create a project (or reuse one).
+2. APIs & Services → OAuth consent screen → External → fill app name + your email → add
+   your colleagues' Gmail addresses under **Test users** (or publish the app).
+3. APIs & Services → Credentials → Create Credentials → **OAuth client ID** →
+   Web application. Under **Authorized redirect URIs** add exactly:
+   `https://YOUR-DOMAIN/auth/callback` (and `http://127.0.0.1:5000/auth/callback` for local testing).
+4. Copy the **Client ID** and **Client secret**.
 
-3. **Set the port** to 5000 in the deployment settings, and add a **persistent volume**
-   mapping `/app/data` — this keeps your SMTP config, saved lists, templates and send
-   logs across restarts.
+**In Coolify → your app → Environment Variables, add:**
 
-4. **Domain & HTTPS**: in Coolify, attach your domain — it handles TLS certificates
-   automatically.
+- `GOOGLE_CLIENT_ID` — the client ID
+- `GOOGLE_CLIENT_SECRET` — the client secret
+- `BASE_URL` — your public URL, e.g. `https://mailmerge.yourdomain.com` (used for the OAuth redirect)
+- `ADMIN_EMAILS` — your email, e.g. `raghunatha.maharana@gmail.com` (you get the Admin panel)
 
-5. **Security note (important):** the app currently has no login screen. Anyone who
-   discovers the URL could use it. Host it on a domain nobody knows and consider adding
-   a password (an `ACCESS_PASSWORD` env var hook is prepared in `.env.example`) before
-   sharing it publicly.
+Then redeploy. The first person to sign in becomes admin automatically if `ADMIN_EMAILS`
+is not set. In the Admin panel you can see every user's lifetime send count and
+block/unblock accounts.
+
+
 
 ---
 

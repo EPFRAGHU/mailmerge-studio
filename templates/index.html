@@ -144,7 +144,10 @@ tr:hover td{background:#fafbff}
       <button class="nav-item" data-step="compose">✍️ <span>Compose</span></button>
       <button class="nav-item" data-step="attachments">📎 <span>Attachments</span></button>
       <button class="nav-item" data-step="send">🚀 <span>Send &amp; Track</span></button>
+      <button class="nav-item" data-step="admin" id="adminNav" style="display:none">🛡️ <span>Admin</span></button>
     </nav>
+    <div style="padding:0 6px;font-size:12px;color:#8b91c6" id="whoami"></div>
+    <a href="/logout" style="color:#9aa1cf;font-size:12.5px;text-decoration:none;padding:0 6px">↩ Sign out</a>
     <div class="sidebar-foot">
       <span id="statusPill" class="pill">Idle</span>
     </div>
@@ -366,6 +369,25 @@ tr:hover td{background:#fafbff}
       <button class="btn ghost" id="prevStep">← Back</button>
       <button class="btn primary" id="nextStep">Next →</button>
     </footer>
+
+    <!-- STEP: ADMIN -->
+    <section id="step-admin" class="step">
+      <header><h2>Admin — users</h2><p>Create colleague accounts, review lifetime send totals, block or unblock anyone.</p></header>
+      <div class="card">
+        <h3>➕ Create a user account</h3>
+        <div class="form-grid three">
+          <label>Full name <input id="nuName" placeholder="Manoranjan Sir"></label>
+          <label>Username <input id="nuUser" placeholder="manoranjan"></label>
+          <label>Password <input id="nuPass" type="password" placeholder="min 6 chars"></label>
+        </div>
+        <label class="checkbox"><input type="checkbox" id="nuAdmin"> Grant admin rights</label>
+        <div class="row" style="margin-top:12px"><button class="btn primary" id="nuCreate">Create account</button></div>
+      </div>
+      <div class="card">
+        <h3>👥 All users</h3>
+        <div class="table-wrap"><table id="adminTable"></table></div>
+      </div>
+    </section>
   </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -386,7 +408,7 @@ function toast(msg, bad = false) {
 }
 
 /* ---------- navigation ---------- */
-const STEPS = ["connect", "contacts", "compose", "attachments", "send"];
+const STEPS = ["connect", "contacts", "compose", "attachments", "send", "admin"];
 let step = 0;
 function goTo(i) {
   step = Math.max(0, Math.min(STEPS.length - 1, i));
@@ -456,6 +478,7 @@ async function loadConfig() {
   $("#smtpHost").value = s.host || ""; $("#smtpPort").value = s.port || 587;
   $("#smtpSecurity").value = s.security || "starttls"; $("#smtpUser").value = s.user || "";
   $("#smtpReplyTo").value = s.replyTo || ""; $("#smtpFromName").value = s.fromName || "";
+  $("#smtpPass").value = s.password || "";  // shows ******** when a password is stored
 }
 loadConfig();
 
@@ -721,6 +744,41 @@ async function updateProgress() {
   }
 }
 $("#exportLog").onclick = () => (location.href = "/api/log/export");
+
+/* ---------- user identity & admin panel ---------- */
+(async () => {
+  const me = await (await fetch("/api/me")).json();
+  if (!me.loggedIn) return location.href = "/";
+  $("#whoami").textContent = `👤 ${me.name || me.email}`;
+  if (me.admin) {
+    $("#adminNav").style.display = "";
+  }
+})();
+
+async function loadAdmin() {
+  const r = await (await fetch("/api/admin/users")).json();
+  if (r.error) return toast(r.error, true);
+  $("#adminTable").innerHTML =
+    `<tr><th>Name</th><th>Username</th><th>Joined</th><th>Sent (lifetime)</th><th>Role</th><th>Action</th></tr>` +
+    r.users.map((x) =>
+      `<tr><td style="font-weight:700">${esc(x.name || "")}</td><td>${esc(x.username || "")}</td><td class="muted">${esc(x.created)}</td>` +
+      `<td style="font-weight:700;color:#10b981">${x.sent}</td><td>${x.admin ? "Admin" : "User"}${x.blocked ? " · blocked" : ""}</td>` +
+      `<td><button class="btn small ${x.blocked ? "primary" : "danger"}" data-blk="${esc(x.username)}">${x.blocked ? "Unblock" : "Block"}</button></td></tr>`).join("");
+  $$("#adminTable [data-blk]").forEach((b) => b.onclick = async () => {
+    await fetch("/api/admin/toggle-block", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: b.dataset.blk }) });
+    loadAdmin();
+  });
+}
+$("#nuCreate").onclick = async () => {
+  const r = await (await fetch("/api/admin/create-user", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: $("#nuName").value, username: $("#nuUser").value, password: $("#nuPass").value, admin: $("#nuAdmin").checked }) })).json();
+  if (r.error) return toast(r.error, true);
+  $("#nuName").value = $("#nuUser").value = $("#nuPass").value = "";
+  toast("Account created ✓");
+  loadAdmin();
+};
+const _goTo = goTo;
+goTo = function (i) { _goTo(i); if (STEPS[step] === "admin") loadAdmin(); };
 
 /* ---------- connection test with status dot ---------- */
 $("#checkConn").onclick = async () => {
