@@ -542,6 +542,7 @@ class Campaign(threading.Thread):
         super().__init__(daemon=True)
         self.user = user
         self.payload = payload
+        self.id = uuid.uuid4().hex[:10]
         self.stop_flag = threading.Event()
         self.log = []
         self.status = "running"
@@ -637,6 +638,8 @@ class Campaign(threading.Thread):
                 except Exception as e:
                     ok, err = False, str(e)
             self.log.append({"to": to, "status": "sent" if ok else "failed", "error": err,
+                             "subject": subject, "body": body, "from": from_addr,
+                             "campaign": self.id,
                              "at": datetime.now().isoformat(timespec="seconds")})
             self.sent += int(ok)
             self.failed += int(not ok)
@@ -776,9 +779,39 @@ def api_admin_users():
                         sent = sum(v["sent"] for v in json.load(f).values())
                 except Exception:
                     pass
-            out.append({"name": usr.get("name"), "email": usr["email"], "created": usr.get("created"),
-                        "admin": usr.get("admin", False), "blocked": usr.get("blocked", False), "sent": sent})
+            out.append({"name": usr.get("name"), "username": usr.get("username"), "email": usr.get("email"),
+                        "created": usr.get("created"), "admin": usr.get("admin", False),
+                        "blocked": usr.get("blocked", False), "sent": sent})
     return jsonify(users=out)
+
+
+@app.route("/api/admin/sends")
+def api_admin_sends():
+    """Full send history across all users: recipient, sender, subject, body, status."""
+    u = current_user()
+    if not is_admin(u):
+        return jsonify(error="Admin only"), 403
+    rows = []
+    for d in os.listdir(USERS_DIR):
+        usr = load_user(d)
+        if not usr:
+            continue
+        lp = os.path.join(USERS_DIR, d, "send_log.json")
+        if not os.path.exists(lp):
+            continue
+        try:
+            with open(lp, "r", encoding="utf-8") as f:
+                log = json.load(f)
+        except Exception:
+            continue
+        sender = (ws(usr)["config"].get("smtp") or {}).get("fromEmail") or usr.get("username")
+        for e in log:
+            rows.append({"user": usr.get("username"), "name": usr.get("name"), "from": e.get("from") or sender,
+                         "to": e.get("to"), "status": e.get("status"), "subject": e.get("subject", ""),
+                         "body": e.get("body", ""), "campaign": e.get("campaign", ""),
+                         "at": e.get("at", ""), "error": e.get("error", "")})
+    rows.sort(key=lambda r: r["at"], reverse=True)
+    return jsonify(rows=rows[:2000], total=len(rows))
 
 
 @app.route("/api/admin/create-user", methods=["POST"])

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^5.0.97"
+  }
+}
